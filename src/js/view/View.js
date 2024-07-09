@@ -473,6 +473,26 @@ class View {
         });
         $('#signConfirm_okBtn').addEventListener('click', () => this.onMessage('showPopup', {name: 'enterPassword'}));
 
+        $('#encryptConfirm_closeBtn').addEventListener('click', () => {
+            this.sendMessage('onCancelAction');
+            this.closePopup()
+        });
+        $('#encryptConfirm_cancelBtn').addEventListener('click', () => {
+            this.sendMessage('onCancelAction');
+            this.closePopup()
+        });
+        $('#encryptConfirm_okBtn').addEventListener('click', () => this.onMessage('showPopup', {name: 'enterPassword'}));
+
+        $('#decryptConfirm_closeBtn').addEventListener('click', () => {
+            this.sendMessage('onCancelAction');
+            this.closePopup()
+        });
+        $('#decryptConfirm_cancelBtn').addEventListener('click', () => {
+            this.sendMessage('onCancelAction');
+            this.closePopup()
+        });
+        $('#decryptConfirm_okBtn').addEventListener('click', () => this.onMessage('showPopup', {name: 'enterPassword'}));
+
         $('#connectConfirm_closeBtn').addEventListener('click', () => {
             this.sendMessage('onCancelAction');
             this.closePopup()
@@ -653,7 +673,7 @@ class View {
 
         toggleFaded($('#modal'), name !== '');
 
-        const popups = ['alert', 'receive', 'invoice', 'invoiceQr', 'send', 'sendConfirm', 'signConfirm', 'connectConfirm', 'processing', 'done', 'menuDropdown', 'about', 'delete', 'changePassword', 'enterPassword', 'transaction', 'connectLedger', 'loader'];
+        const popups = ['alert', 'receive', 'invoice', 'invoiceQr', 'send', 'sendConfirm', 'signConfirm', 'encryptConfirm', 'decryptConfirm','connectConfirm', 'processing', 'done', 'menuDropdown', 'about', 'delete', 'changePassword', 'enterPassword', 'transaction', 'connectLedger', 'loader'];
 
         popups.forEach(popup => {
             toggleFaded($('#' + popup), name === popup);
@@ -1467,6 +1487,21 @@ class View {
 
                         const hex = params.data.length > 48 ? params.data.substring(0, 47) + '…' : params.data;
                         setAddr($('#signConfirmData'), hex);
+                        break;
+                    case 'encryptConfirm':
+                        $('#encryptConfirmText').innerText = 'Do you want to encrypt the message?';
+                        const plainTextMessage = params.data.length > 48 ? params.data.substring(0, 47) + '…' : params.data;
+                        $('#encryptConfirmData').innerText = plainTextMessage;
+                        // setAddr($('#encryptConfirmData'), params.data);
+                        const receiver = params.receiver.length > 48 ? params.receiver.substring(0, 47) + '…' : params.receiver;
+                        setAddr($('#encryptConfirmReceiver'), receiver);
+                        break;
+                    case 'decryptConfirm':
+                        $('#decryptConfirmText').innerText = 'Do you want to decrypt the messages and/or data?';
+                        const encryptedDataMessage = params.data.length > 48 ? params.data.substring(0, 47) + '…' : params.data;
+                        $('#decryptConfirmData').innerText = encryptedDataMessage;
+                        const sender = params.sender.length > 48 ? params.sender.substring(0, 47) + '…' : params.sender;
+                        setAddr($('#decryptConfirmSender'), sender);
                         break;
                     case 'connectConfirm':
                         break;

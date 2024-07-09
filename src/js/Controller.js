@@ -1,5 +1,5 @@
 import storage from './util/storage.js';
-import {decryptMessageComment, encryptMessageComment, makeSnakeCells, parseSnakeCells} from "./util/encryption.js";
+import {decryptMessageComment, encryptMessageComment, encryptDataMessageComment, makeSnakeCells, parseSnakeCells} from "./util/encryption.js";
 
 const TONCONNECT_MAINNET = '-239';
 const TONCONNECT_TESTNET = '-3';
@@ -133,7 +133,7 @@ class Controller {
         /** @type {boolean} */
         this.isTestnet = false;
         /** @type {boolean} */
-        this.isDebug = false;
+        this.isDebug = true;
         /** @type {string} */
         this.myAddress = null;
         /** @type {string} */
@@ -919,6 +919,139 @@ class Controller {
         return in_fwd_fee.add(storage_fee).add(gas_fee).add(fwd_fee);
     };
 
+    async showCryptConfirm(theirPublicKey, dataToEncrypt, needQueue) {
+        createDappPromise();
+
+        if (this.isLedger) {
+            const message = request.messages[0];
+
+            // this.sendToView('showPopup', {
+            //     name: 'encryptConfirm',
+            //     // amount: message.amount.toString(),
+            //     // toAddress: message.toAddress,
+            //     // needEncryptComment: false,
+            //     // fee: fee.toString()
+            // }, needQueue);
+
+            // const sentBoc = await this.send(request, null, totalAmount);
+
+            if (sentBoc) {
+                dAppPromise.resolve(sentBoc);
+            } else {
+                this.sendToView('sendCheckFailed', {message: 'API request error'});
+                dAppPromise.resolve(null);
+            }
+        } else {
+            this.afterEnterPassword = async words => {
+                this.processingVisible = true;
+                // this.sendToView('showPopup', {name: 'processing'});
+
+                const keyPair = await TonWeb.mnemonic.mnemonicToKeyPair(words);
+
+                const theirPublicKeyUint8Array = this.hexToUint8Array(theirPublicKey);
+               
+                /** @type {Uint8Array} */
+                const encryptedComment = await encryptDataMessageComment(dataToEncrypt, keyPair.publicKey, theirPublicKeyUint8Array, keyPair.secretKey, this.myAddress);
+                
+                this.onCancelAction = null;
+
+                if (encryptedComment) {
+                    dAppPromise.resolve(encryptedComment);
+                } else {
+                    this.sendToView('sendCheckFailed', {message: 'API request error'});//TODO: UI
+                    dAppPromise.resolve(null);
+                }
+            }
+        
+            this.onCancelAction = () => {
+                dAppPromise.resolve(null);
+            };
+
+            this.sendToView('showPopup', {
+                name: 'encryptConfirm',
+                receiver: theirPublicKey,
+                data: dataToEncrypt,
+            }, needQueue);
+        }
+        this.sendToView('sendCheckSucceeded');
+
+        
+
+        return dAppPromise;
+    }
+
+    async showDecryptConfirm(encryptedData, senderAddress, needQueue) {
+        createDappPromise();
+
+        if (this.isLedger) {
+            const message = request.messages[0];
+
+            // this.sendToView('showPopup', {
+            //     name: 'encryptConfirm',
+            //     // amount: message.amount.toString(),
+            //     // toAddress: message.toAddress,
+            //     // needEncryptComment: false,
+            //     // fee: fee.toString()
+            // }, needQueue);
+
+            const sentBoc = await this.send(request, null, totalAmount);
+
+            if (sentBoc) {
+                dAppPromise.resolve(sentBoc);
+            } else {
+                this.sendToView('sendCheckFailed', {message: 'API request error'});
+                dAppPromise.resolve(null);
+            }
+        } else {
+            this.afterEnterPassword = async words => {
+
+                this.processingVisible = true;
+
+                const keyPair = await TonWeb.mnemonic.mnemonicToKeyPair(words);
+
+                const encryptedDataUint8Array = TonWeb.utils.base64ToBytes(encryptedData);
+                const encryptedDataUint8ArrayPrefixRemoved = encryptedDataUint8Array.slice(4);
+
+                const decryptedData = await decryptMessageComment(encryptedDataUint8ArrayPrefixRemoved, keyPair.publicKey, keyPair.secretKey, senderAddress);
+
+                if (decryptedData) {
+                    dAppPromise.resolve(decryptedData);
+                } else {
+                    this.sendToView('sendCheckFailed', {message: 'API request error'});//TODO: UI
+                    dAppPromise.resolve(null);
+                }
+            }
+        
+            this.onCancelAction = () => {
+                dAppPromise.resolve(null);
+            };
+
+            this.sendToView('showPopup', {
+                name: 'decryptConfirm',
+                data: encryptedData,
+                sender: senderAddress,
+            }, needQueue);
+        }
+        this.sendToView('sendCheckSucceeded');
+
+        return dAppPromise;
+    }
+
+    stringToBuffer(formattedHexString) {
+        const plainHexString = formattedHexString.replace(/\s+/g, ''); // Remove spaces
+        const originalBuffer = Buffer.from(plainHexString, 'hex');
+        return originalBuffer;
+    }
+
+    hexToUint8Array(hexString) {
+        const length = hexString.length;
+        const uint8Array = new Uint8Array(length / 2);
+        for (let i = 0; i < length; i += 2) {
+            uint8Array[i / 2] = parseInt(hexString.substring(i, i + 2), 16);
+        }
+        return uint8Array;
+    }
+
     /**
      * @param request {{expireAt?: number, messages: [{amount: BN, toAddress: string, comment?: string | Uint8Array | Cell, needEncryptComment: boolean, stateInit?: Cell}]}}
      * @param needQueue? {boolean}
@@ -1702,7 +1835,6 @@ class Controller {
                 await showExtensionWindow();
 
                 const tx = params[0];
-                console.log('tonConnect_sendTransaction', params, origin, tx);
 
                 // check is dapp connected to wallet
 
@@ -1844,6 +1976,53 @@ class Controller {
 
                 return TonWeb.utils.bytesToBase64(await sentBoc.toBoc(false));
 
+            case 'tonConnect_encryptData':
+
+                await showExtensionWindow();
+
+                const theirPublicKey = params[0].data[1];
+                const hexToEncrypt = params[0].data[0];
+
+                this.sendToView('showPopup', {
+                    name: 'loader',
+                });
+
+                /** @type {Cell | null} */
+                const encryptedData = await this.showCryptConfirm(params[0].data[1], params[0].data[0], needQueue);
+
+                if(encryptedData) {
+                    this.sendToView('closePopup');
+                    // throw {
+                    //     message: 'bad',
+                    //     code: 1 // BAD_REQUEST_ERROR
+                    // }
+                }
+
+                return TonWeb.utils.bytesToBase64( encryptedData );
+
+            case 'tonConnect_decryptData':
+                await showExtensionWindow();
+                this.sendToView('showPopup', {
+                    name: 'loader',
+                });
+
+                const address = params[0].data[0];
+                console.log("address", address);
+                const passedData = params[0].data[1];
+                console.log("passedData", passedData);
+                console.log("this.Address", this.myAddress);
+                const decryptedData = await this.showDecryptConfirm(passedData, address, needQueue);
+
+                if(decryptedData) {
+                    this.sendToView('closePopup');
+                    // throw {
+                    //     message: 'bad',
+                    //     code: 1 // BAD_REQUEST_ERROR
+                    // }
+                }
+
+                return decryptedData;
+    
             case 'ton_requestAccounts':
                 return (this.myAddress ? [this.myAddress] : []);
             case 'ton_requestWallets':

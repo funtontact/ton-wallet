@@ -297,7 +297,7 @@
             this.deviceInfo = {
                 platform: 'web',
                 appName: 'tonwallet',
-                appVersion: '1.1.49',
+                appVersion: '1.1.491',
                 maxProtocolVersion: 2,
                 features: [
                     'SendTransaction',
@@ -305,6 +305,16 @@
                         name: 'SendTransaction',
                         maxMessages: 4,
                     },
+                    'EncryptData',
+                    {
+                        name: 'EncryptData',
+                        maxMessages: 4,
+                    },
+                    'DecryptData',
+                    {
+                        name: 'DecryptData',
+                        maxMessages: 4,//TODO: make it unlimited to decrypt all the data passed as array of messages
+                    }
                 ],
             };
 
@@ -393,6 +403,10 @@
                     id: String(message.id)
                 }
             }
+        }
+
+        async encrypt(message, publicKey) {
+            const privateKeyBase64 = await Controller.wordsToPrivateKey(words);
         }
 
         listen(callback) {

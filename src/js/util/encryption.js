@@ -210,6 +210,40 @@ export const encryptMessageComment = async (comment, myPublicKey, theirPublicKey
 }
 
 /**
+ * @param comment   {string}
+ * @param myPublicKey   {Uint8Array}
+ * @param theirPublicKey    {Uint8Array}
+ * @param myPrivateKey  {Uint8Array}
+ * @param senderAddress   {string | Address}
+ * @return {Promise<Uint8Array>} full message binary payload with 0x2167da4b prefix
+ */
+export const encryptDataMessageComment = async (comment, myPublicKey, theirPublicKey, myPrivateKey, senderAddress) => {
+    if (!comment || !comment.length) throw new Error('empty comment');
+
+    if (myPrivateKey.length === 64) {
+        myPrivateKey = myPrivateKey.slice(0, 32); // convert nacl private key
+    }
+
+    /** @type {Uint8Array} */
+    const commentBytes = new TextEncoder().encode(comment);
+
+    /** @type {Uint8Array} */
+    const salt = new TextEncoder().encode(new TonWeb.utils.Address(senderAddress).toString(true, true, true, false));
+
+    /** @type {Uint8Array} */
+    const encryptedBytes = await encryptData(commentBytes, myPublicKey, theirPublicKey, myPrivateKey, salt);
+
+    const payload = new Uint8Array(encryptedBytes.length + 4);
+    payload[0] = 0x21; // encrypted text prefix
+    payload[1] = 0x67;
+    payload[2] = 0xda;
+    payload[3] = 0x4b;
+    payload.set(encryptedBytes, 4);
+
+    return payload;
+}
+
+/**
  * @param cbcStateSecret {Uint8Array}
  * @param msgKey {Uint8Array}
  * @param encryptedData {Uint8Array}

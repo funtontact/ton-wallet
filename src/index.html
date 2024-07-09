@@ -536,6 +536,50 @@
         </div>
     </div>
 
+    <!-- Encrypt Confirm Popup -->
+
+    <div id="encryptConfirm" class="popup pb-10 visibility-hidden">
+        <div class="popup-title">Confirmation</div>
+        <div id="encryptConfirmText" class="popup-black-text">Do you want to encrypt: </div>
+
+        <div id="encryptConfirmData" class="addr"></div>
+
+        <div id="encryptConfirmText" class="popup-black-text">For the: </div>
+
+        <div id="encryptConfirmReceiver" class="addr"></div>
+
+        <div id="encryptConfirmAlert" class="popup-grey-text text-align-center font-weight-bold text-danger">Encrypt so that the message is only readable by the receiver.</div>
+
+        <button id="encryptConfirm_closeBtn" class="popup-close-btn"></button>
+
+        <div class="popup-footer">
+            <button id="encryptConfirm_cancelBtn" class="btn-lite">NO</button>
+            <button id="encryptConfirm_okBtn" class="btn-lite">YES</button>
+        </div>
+    </div>
+
+    <!-- Decrypt Confirm Popup -->
+
+    <div id="decryptConfirm" class="popup pb-10 visibility-hidden">
+        <div class="popup-title">Confirmation</div>
+        <div id="decryptConfirmText" class="popup-black-text">Do you want to decrypt: </div>
+
+        <div id="decryptConfirmData" class="addr"></div>
+
+        <div id="decryptConfirmText" class="popup-black-text">From: </div>
+
+        <div id="decryptConfirmSender" class="addr"></div>
+
+        <div id="decryptConfirmAlert" class="popup-grey-text text-align-center font-weight-bold text-danger">Only decrypt data on the platforms you trust OR offline.</div>
+
+        <button id="decryptConfirm_closeBtn" class="popup-close-btn"></button>
+
+        <div class="popup-footer">
+            <button id="decryptConfirm_cancelBtn" class="btn-lite">NO</button>
+            <button id="decryptConfirm_okBtn" class="btn-lite">YES</button>
+        </div>
+    </div>
+
     <!-- Connect Confirm Popup -->
 
     <div id="connectConfirm" class="popup pb-10 visibility-hidden">

@@ -947,7 +947,7 @@ button {
 }
 
 
-#sendConfirm .addr, #signConfirm .addr {
+#sendConfirm .addr, #signConfirm .addr, #encryptConfirm .addr {
     font-family: monospace;
     text-align: center;
     font-size: 18px;
